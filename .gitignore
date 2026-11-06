@@ -1,0 +1,10 @@
+/*
+!/.gitignore
+!/README.md
+!/DEVELOPMENT.md
+!/UPDATING.md
+!/.github/
+!/docs/
+!/3d/
+!/test/
+**/__pycache__/

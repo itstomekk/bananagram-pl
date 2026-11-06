@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const {spawn}=require('node:child_process');
+const path=require('node:path');
+(async()=>{const port=49000+Math.floor(Math.random()*1000); const server=spawn(process.execPath,[path.join(__dirname,'../docs/server.js')],{env:{...process.env,PORT:String(port)}}); const base=`http://127.0.0.1:${port}`;
+try {let ready=false; for(let i=0;i<100;i++){try{await fetch(base);ready=true;break}catch{await new Promise(r=>setTimeout(r,50))}} assert(ready,'server did not start');
+const post=async(url,data)=>{let r=await fetch(base+url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});return [r.status,await r.json()]};
+let [,a]=await post('/api/create',{name:'Ala'}); let [,b]=await post('/api/join',{room:a.room,name:'Ola'}); assert.notEqual(a.token,b.token);
+let [status]=await post('/api/action',{room:a.room,token:b.token,action:'start'}); assert.equal(status,400);
+[status]=await post('/api/action',{room:a.room,token:a.token,action:'start'});assert.equal(status,200);
+let s=await (await fetch(`${base}/api/state?room=${a.room}&token=${b.token}`)).json();assert.equal(s.game.players.length,2);assert.equal(s.game.players[0].hand.length,21);
+[status]=await post('/api/action',{room:a.room,token:a.token,action:'place',index:0,x:7,y:7});assert.equal(status,200);
+s=await (await fetch(`${base}/api/state?room=${a.room}&token=${b.token}`)).json();assert.equal(Object.keys(s.game.players[0].board).length,1);
+[status]=await post('/api/action',{room:a.room,token:'fake',action:'place',index:0,x:1,y:1});assert.equal(status,400);
+console.log('PASS multiplayer server');
+}finally{server.kill()}})().catch(e=>{console.error(e);process.exitCode=1});

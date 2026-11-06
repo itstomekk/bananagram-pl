@@ -1,0 +1,55 @@
+{
+  "parametry": {
+    "TILE": 20.0,
+    "GAP": 2.0,
+    "GRID": 6,
+    "R_CORNER": 3.0,
+    "H": 3.2,
+    "R_TOP": 1.0,
+    "CHAMFER": 0.4,
+    "RELIEF": 0.6,
+    "MARGIN": 1.2,
+    "FONT": "Bahnschrift Bold (wght 700, wdth 100)",
+    "skala_mm_na_em": 13.441,
+    "wysokosc_wersalika_mm": 9.542,
+    "linia_bazowa_mm_od_srodka": -5.044,
+    "zakres_pionowy_mm": [
+      -7.8,
+      7.8
+    ]
+  },
+  "uklad_plyt_wiersze_od_dolu": {
+    "plyta-1-designerska.stl": [
+      "AAAABC",
+      "DEEEFG",
+      "IIIJKL",
+      "ŁMNNOO",
+      "ÓPRSST",
+      "UWWYZZ"
+    ],
+    "plyta-2-designerska.stl": [
+      "AAAĄBC",
+      "DEEEFH",
+      "IIIJKL",
+      "ŁMNŃOO",
+      "ÓPRSST",
+      "UWYYZZ"
+    ],
+    "plyta-3-designerska.stl": [
+      "AAAĄCĆ",
+      "DEEĘGH",
+      "IIIJKL",
+      "MNNŃOO",
+      "PRRSŚT",
+      "UWYYZŹ"
+    ],
+    "plyta-4-designerska.stl": [
+      "AAABCĆ",
+      "DEEĘGH",
+      "IIIKLŁ",
+      "MNNOOO",
+      "PRRSŚT",
+      "WWYZZŻ"
+    ]
+  }
+}
