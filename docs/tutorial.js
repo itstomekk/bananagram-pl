@@ -1,12 +1,15 @@
 (()=>{
 'use strict';
 const KEY='bananagram-tutorial-v1';
+// This is a scripted DOM demonstration, not a game-engine instance or a source of rules.
+// Keep STEPS and SCENES aligned with each other and with the real rules when changing them.
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=(s,r=document)=>r.querySelector(s);
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const seen=()=>{try{return localStorage.getItem(KEY)==='1'}catch{return false}};
 const mark=()=>{try{localStorage.setItem(KEY,'1')}catch{}};
 let tok=0,idx=0,root,ui={},prevFocus=null;
+// Advancing or closing increments tok; pending animation waits then reject and stop the old scene.
 const wait=(ms,t)=>new Promise((res,rej)=>setTimeout(()=>t===tok?res():rej(new Error('cancel')),reduce?0:ms));
 
 const STEPS=[
@@ -73,6 +76,7 @@ function build(o={}){
 }
 
 const KOT_TOR={'0,0':'K','0,1':'O','0,2':'T','1,2':'O','2,2':'R'};
+// The demo shows only the local hand visually; online snapshots are not confidential.
 const SCENES=[
  async()=>{
   const S=build({label:'Twoje płytki',count:'0 / 21'});
@@ -130,6 +134,7 @@ const SCENES=[
 
 async function play(i){
  const t=++tok;
+ // Reduced motion runs each scene once, with animation delays suppressed.
  try{
   for(;;){
    await SCENES[i]();
