@@ -11,15 +11,18 @@ try:
  else: raise AssertionError('server not listening')
  with sync_playwright() as p:
   browser=p.chromium.launch(channel='chrome',headless=True)
+  seen="localStorage.setItem('bananagram-tutorial-v1','1')"
   a=browser.new_context(viewport={'width':1280,'height':900});b=browser.new_context(viewport={'width':390,'height':844})
+  a.add_init_script(seen);b.add_init_script(seen)
   host=a.new_page();guest=b.new_page(); errors=[]
   for page in [host,guest]:
    page.on('pageerror',lambda e:errors.append(str(e)))
    page.on('response',lambda r: errors.append(f'HTTP {r.status} {r.url}') if r.status>=400 and f'127.0.0.1:{port}' in r.url else None)
   url=f'http://127.0.0.1:{port}/'
+  scratch=pathlib.Path(os.environ['LOCALAPPDATA'])/'hermes'/'cache'/'scratch';scratch.mkdir(parents=True,exist_ok=True)
   host.goto(url);guest.goto(url)
   # Simulate a static host: an HTML error page instead of the room API.
-  static=browser.new_page(viewport={'width':1280,'height':900})
+  sc=browser.new_context(viewport={'width':1280,'height':900});sc.add_init_script(seen);static=sc.new_page()
   static.route('**/api/**',lambda route: route.fulfill(status=404,content_type='text/html',body='<html>Not found</html>'))
   static.goto(url);static.locator('#create').click()
   static.wait_for_function("document.querySelector('#status').textContent.length > 0")
@@ -46,7 +49,7 @@ try:
   assert host.evaluate("Object.keys(window.__literki.game.players[1].board).length")==1
   guest.reload();guest.locator('#board .occupied').wait_for();assert guest.locator('#hand .tile').count()==20
   assert guest.evaluate('document.documentElement.scrollWidth <= innerWidth')
-  scratch=pathlib.Path(os.environ['LOCALAPPDATA'])/'hermes'/'cache'/'scratch';scratch.mkdir(parents=True,exist_ok=True);host.screenshot(path=str(scratch/'literki-desktop.png'),full_page=True);guest.screenshot(path=str(scratch/'literki-mobile.png'),full_page=True)
+  host.screenshot(path=str(scratch/'literki-desktop.png'),full_page=True);guest.screenshot(path=str(scratch/'literki-mobile.png'),full_page=True)
   host.locator('.leave').last.click();host.locator('#solo').click();assert host.locator('#hand .tile').count()==21
   host.locator('#hand .tile').first.click();host.locator('.cell[data-x="7"][data-y="7"]').click();assert host.locator('#hand .tile').count()==20
   assert host.locator('#hand .tile[aria-pressed="true"]').count()==0
@@ -54,6 +57,31 @@ try:
   host.screenshot(path=str(scratch/'literki-solo.png'),full_page=True)
   host.locator('.cell[data-x="7"][data-y="7"]').click();assert host.locator('#hand .tile').count()==21
   assert not errors,errors
+  # Tutorial: auto-opens for a first-time visitor, animates, closes, remembers.
+  for vp in ({'width':1280,'height':800},{'width':390,'height':844}):
+   tc=browser.new_context(viewport=vp);tp=tc.new_page();terr=[];tp.on('pageerror',lambda e:terr.append(str(e)))
+   tp.goto(url);tp.locator('#tutorial').wait_for(state='visible')
+   assert 'KROK 1 Z 4' in tp.locator('.tut-step').inner_text()
+   tp.wait_for_function("document.querySelectorAll('#tutorial .tut-hand .tut-tile').length===21",timeout=8000)
+   tp.locator('.tut-nav .primary').click()
+   tp.wait_for_function("document.querySelectorAll('#tutorial .tut-cell .tut-tile').length>=5",timeout=15000)
+   assert tp.evaluate("document.querySelector('#tutorial .tut-card').scrollWidth<=document.querySelector('#tutorial .tut-card').clientWidth")
+   box=tp.locator('.tut-card').bounding_box();assert box['x']>=0 and box['x']+box['width']<=vp['width']+1,box
+   if vp['width']==1280: tp.screenshot(path=str(scratch/'bananagram-tutorial-desktop.png'))
+   else: tp.screenshot(path=str(scratch/'bananagram-tutorial-mobile.png'))
+   tp.locator('.tut-nav .primary').click();tp.wait_for_function("document.querySelector('.tut-btn')&&document.querySelector('.tut-btn').classList.contains('hot')",timeout=20000)
+   tp.locator('.tut-nav .primary').click();tp.wait_for_function("document.querySelector('.tut-win')",timeout=20000)
+   assert tp.locator('.tut-nav .primary').inner_text()=='Zaczynam'
+   tp.keyboard.press('Escape');assert tp.locator('#tutorial').is_hidden()
+   tp.reload();tp.wait_for_timeout(300);assert tp.locator('#tutorial').is_hidden()
+   tp.locator('#lobby [data-tutorial]').click();assert tp.locator('#tutorial').is_visible()
+   tp.keyboard.press('Escape')
+   tp.locator('#solo').click();tp.locator('.side [data-tutorial]').click();assert tp.locator('#tutorial').is_visible()
+   assert not terr,terr
+   tc.close()
+  # Reduced motion: final state shown without waiting for loops.
+  rc=browser.new_context(viewport={'width':1280,'height':800},reduced_motion='reduce');rp=rc.new_page();rp.goto(url);rp.locator('#tutorial').wait_for(state='visible')
+  rp.wait_for_function("document.querySelectorAll('#tutorial .tut-hand .tut-tile').length===21");rc.close()
   browser.close()
  print('PASS browser: solo, two isolated clients, bidirectional moves, reload, mobile width, HTTP/page errors')
 finally:
