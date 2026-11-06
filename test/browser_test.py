@@ -18,6 +18,21 @@ try:
    page.on('response',lambda r: errors.append(f'HTTP {r.status} {r.url}') if r.status>=400 and f'127.0.0.1:{port}' in r.url else None)
   url=f'http://127.0.0.1:{port}/'
   host.goto(url);guest.goto(url)
+  # Simulate a static host: an HTML error page instead of the room API.
+  static=browser.new_page(viewport={'width':1280,'height':900})
+  static.route('**/api/**',lambda route: route.fulfill(status=404,content_type='text/html',body='<html>Not found</html>'))
+  static.goto(url);static.locator('#create').click()
+  static.wait_for_function("document.querySelector('#status').textContent.length > 0")
+  message=static.locator('#status').inner_text()
+  assert 'serwer' in message.lower() and 'json' not in message.lower(),message
+  static.locator('#solo').click()
+  assert static.locator('#hand .tile').count()==21
+  assert static.locator('#game').bounding_box()['height'] == 900
+  assert static.locator('#board').bounding_box()['width'] > 500
+  assert static.locator('.side').bounding_box()['x'] > static.locator('#board').bounding_box()['x']
+  assert static.locator('a[href="https://github.com/itstomekk/bananagram-pl"]').count()==1
+  assert static.locator('a[href="https://github.com/itstomekk/bananagram-pl/tree/main/3d"]').count()==1
+  static.close()
   host.locator('#name').fill('Ala');host.locator('#create').click();host.locator('#code').wait_for(state='visible');code=host.locator('#code').inner_text();assert len(code)==6
   guest.locator('#name').fill('Ola');guest.locator('#room').fill(code);guest.locator('#join').click();guest.locator('#waiting').wait_for(state='visible')
   host.locator('#start').wait_for(state='visible');host.wait_for_function("!document.querySelector('#start').disabled");host.locator('#start').click()

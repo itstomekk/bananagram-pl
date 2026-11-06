@@ -1,4 +1,4 @@
-# Literki
+# Bananagram
 
 Niezależna polska gra słowna inspirowana Bananagrams. Graj solo albo w pokoju dla 2–4 osób. Zestaw ma 144 płytki zgodne z projektowym rozkładem liter.
 
